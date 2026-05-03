@@ -33,7 +33,7 @@
     }
 
     h3 {
-      margin-top: 18px;
+      margin-top: 0;
       margin-bottom: 6px;
       font-size: 15px;
     }
@@ -46,7 +46,8 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 8px;
+      margin-right: 6px;
     }
 
     button:hover {
@@ -115,6 +116,13 @@
       display: inline-block;
     }
 
+    .captura-tabla {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
     .nota {
       font-size: 13px;
       color: #6b7280;
@@ -132,7 +140,7 @@
     }
 
     .bloque-tabla {
-      margin-top: 14px;
+      margin-top: 16px;
     }
 
     .col-caidas {
@@ -153,6 +161,10 @@
 
     .fila-porcentaje td {
       font-weight: bold;
+    }
+
+    .acciones-tabla {
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -184,41 +196,79 @@
       </div>
 
       <div class="bloque-tabla">
-        <h3>Tabla 1 - Reporte T4</h3>
-        <div class="filtros">
-          <strong>TERRITORIO:</strong> T4
+        <div id="capturaTabla1" class="captura-tabla">
+          <h3>Reporte T4</h3>
+          <div class="filtros">
+            <strong>PRODUCTO:</strong> HFC <br>
+            <strong>Fecha:</strong> <span class="fechaBloque"></span> <br>
+            <strong>TERRITORIO:</strong> T4
+          </div>
+          <div id="tablaReporte1"></div>
         </div>
-        <div id="tablaReporte1"></div>
+
+        <div class="acciones-tabla">
+          <button onclick="compartirBloque('capturaTabla1', 'reporte_t4.jpg', 'Reporte T4')">
+            Compartir Reporte T4
+          </button>
+        </div>
       </div>
 
       <div class="bloque-tabla">
-        <h3>Tabla 2 - Instaladas por Territorio</h3>
-        <div class="filtros">
-          <strong>ESTADO_REPORT:</strong> INSTALADAS
+        <div id="capturaTabla2" class="captura-tabla">
+          <h3>Instaladas por Territorio</h3>
+          <div class="filtros">
+            <strong>PRODUCTO:</strong> HFC <br>
+            <strong>Fecha:</strong> <span class="fechaBloque"></span> <br>
+            <strong>ESTADO_REPORT:</strong> INSTALADAS
+          </div>
+          <div id="tablaReporte2"></div>
         </div>
-        <div id="tablaReporte2"></div>
+
+        <div class="acciones-tabla">
+          <button onclick="compartirBloque('capturaTabla2', 'instaladas_por_territorio.jpg', 'Instaladas por Territorio')">
+            Compartir Instaladas por Territorio
+          </button>
+        </div>
       </div>
 
       <div class="bloque-tabla">
-        <h3>Tabla 3 - Detalle de caídas T4</h3>
-        <div class="filtros">
-          <strong>TERRITORIO:</strong> T4 <br>
-          <strong>ESTADO_REPORT:</strong> CAIDAS
+        <div id="capturaTabla3" class="captura-tabla">
+          <h3>Detalle de caídas T4</h3>
+          <div class="filtros">
+            <strong>PRODUCTO:</strong> HFC <br>
+            <strong>Fecha:</strong> <span class="fechaBloque"></span> <br>
+            <strong>TERRITORIO:</strong> T4 <br>
+            <strong>ESTADO_REPORT:</strong> CAIDAS
+          </div>
+          <div id="tablaReporte3"></div>
         </div>
-        <div id="tablaReporte3"></div>
+
+        <div class="acciones-tabla">
+          <button onclick="compartirBloque('capturaTabla3', 'detalle_caidas_t4.jpg', 'Detalle de caídas T4')">
+            Compartir Detalle de caídas T4
+          </button>
+        </div>
       </div>
 
       <div class="bloque-tabla">
-        <h3>Tabla 4 - OT Caídas vs Instaladas T4</h3>
-        <div class="filtros">
-          <strong>TERRITORIO:</strong> T4
+        <div id="capturaTabla4" class="captura-tabla">
+          <h3>OT Caídas vs Instaladas T4</h3>
+          <div class="filtros">
+            <strong>PRODUCTO:</strong> HFC <br>
+            <strong>Fecha:</strong> <span class="fechaBloque"></span> <br>
+            <strong>TERRITORIO:</strong> T4
+          </div>
+          <div id="tablaReporte4"></div>
         </div>
-        <div id="tablaReporte4"></div>
+
+        <div class="acciones-tabla">
+          <button onclick="compartirBloque('capturaTabla4', 'caidas_vs_instaladas_t4.jpg', 'OT Caídas vs Instaladas T4')">
+            Compartir OT Caídas vs Instaladas T4
+          </button>
+        </div>
       </div>
     </div>
 
-    <br>
-    <button onclick="descargarJPG()">Descargar JPG</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -405,7 +455,13 @@
 
     function generarReporte(filas) {
       const fechaDeHoy = fechaHoyPC();
-      fechaMostrada.textContent = fechaBonita(fechaDeHoy);
+      const fechaFormateada = fechaBonita(fechaDeHoy);
+
+      fechaMostrada.textContent = fechaFormateada;
+
+      document.querySelectorAll(".fechaBloque").forEach(function(elemento) {
+        elemento.textContent = fechaFormateada;
+      });
 
       const baseFiltrada = filas.filter(fila => {
         return textoMayuscula(fila["PRODUCTO"]) === "HFC" &&
@@ -766,18 +822,47 @@
       return html;
     }
 
-    function descargarJPG() {
-      const area = document.getElementById("reporteImagen");
+    async function compartirBloque(idBloque, nombreArchivo, titulo) {
+      const area = document.getElementById(idBloque);
 
-      html2canvas(area, {
+      const canvas = await html2canvas(area, {
         scale: 3,
         backgroundColor: "#ffffff"
-      }).then(canvas => {
-        const enlace = document.createElement("a");
-        enlace.download = "reporte_hfc.jpg";
-        enlace.href = canvas.toDataURL("image/jpeg", 0.95);
-        enlace.click();
       });
+
+      canvas.toBlob(async function(blob) {
+        if (!blob) {
+          alert("No se pudo generar la imagen.");
+          return;
+        }
+
+        const archivoImagen = new File(
+          [blob],
+          nombreArchivo,
+          { type: "image/jpeg" }
+        );
+
+        if (navigator.canShare && navigator.canShare({ files: [archivoImagen] })) {
+          try {
+            await navigator.share({
+              title: titulo,
+              text: titulo,
+              files: [archivoImagen]
+            });
+          } catch (error) {
+            if (error.name !== "AbortError") {
+              alert("No se pudo compartir la imagen.");
+            }
+          }
+        } else {
+          const enlace = document.createElement("a");
+          enlace.download = nombreArchivo;
+          enlace.href = canvas.toDataURL("image/jpeg", 0.95);
+          enlace.click();
+
+          alert("Tu navegador no permite compartir directamente. Se descargó la imagen.");
+        }
+      }, "image/jpeg", 0.95);
     }
   </script>
 
