@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generador de Reportes</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+      color: #111827;
+    }
+
+    .caja {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 1100px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    button {
+      background: #111827;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #374151;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: auto;
+      background: white;
+      margin-top: 8px;
+      font-size: 12px;
+      table-layout: fixed;
+    }
+
+    th {
+      background: #b7e3f4;
+      color: #111827;
+      padding: 4px 6px;
+      border: 1px solid #9ca3af;
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.15;
+      white-space: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 85px;
+      min-width: 55px;
+    }
+
+    td {
+      padding: 4px 6px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+      line-height: 1.15;
+      white-space: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 85px;
+      min-width: 55px;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+      font-weight: bold;
+      max-width: 155px;
+      min-width: 115px;
+    }
+
+    .total {
+      background: #b7e3f4;
+      font-weight: bold;
+    }
+
+    .filtros {
+      font-size: 12px;
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+
+    #reporteImagen {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .nota {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .alerta {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+      font-size: 13px;
+    }
+
+    .bloque-tabla {
+      margin-top: 14px;
+    }
+
+    .col-caidas {
+      background: #ffc000;
+    }
+
+    .col-instaladas {
+      background: #92d050;
+    }
+
+    .col-finalizado {
+      background: #92d050;
+    }
+
+    .fila-t4 td {
+      background: #92d050;
+    }
+
+    .fila-porcentaje td {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="caja">
+    <h1>Generador de Reporte</h1>
+
+    <p>Selecciona el Excel descargado:</p>
+    <input type="file" id="archivoExcel" accept=".xlsx,.xls,.csv">
+
+    <p id="mensaje">Ningún archivo seleccionado.</p>
+    <p class="nota">El archivo se procesa en tu navegador.</p>
+  </div>
+
+  <div class="caja" id="reporte" style="display:none;">
+
+    <div id="reporteImagen">
+      <h2>Reporte HFC</h2>
+
+      <div class="filtros">
+        <strong>PRODUCTO:</strong> HFC <br>
+        <strong>Fecha:</strong> <span id="fechaMostrada"></span>
+      </div>
+
+      <div id="alertaSinDatos" class="alerta">
+        No se encontraron registros para la fecha de hoy.
+      </div>
+
+      <div class="bloque-tabla">
+        <h3>Tabla 1 - Reporte T4</h3>
+        <div class="filtros">
+          <strong>TERRITORIO:</strong> T4
+        </div>
+        <div id="tablaReporte1"></div>
+      </div>
+
+      <div class="bloque-tabla">
+        <h3>Tabla 2 - Instaladas por Territorio</h3>
+        <div class="filtros">
+          <strong>ESTADO_REPORT:</strong> INSTALADAS
+        </div>
+        <div id="tablaReporte2"></div>
+      </div>
+
+      <div class="bloque-tabla">
+        <h3>Tabla 3 - Detalle de caídas T4</h3>
+        <div class="filtros">
+          <strong>TERRITORIO:</strong> T4 <br>
+          <strong>ESTADO_REPORT:</strong> CAIDAS
+        </div>
+        <div id="tablaReporte3"></div>
+      </div>
+
+      <div class="bloque-tabla">
+        <h3>Tabla 4 - OT Caídas vs Instaladas T4</h3>
+        <div class="filtros">
+          <strong>TERRITORIO:</strong> T4
+        </div>
+        <div id="tablaReporte4"></div>
+      </div>
+    </div>
+
+    <br>
+    <button onclick="descargarJPG()">Descargar JPG</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    const input = document.getElementById("archivoExcel");
+    const mensaje = document.getElementById("mensaje");
+    const reporte = document.getElementById("reporte");
+    const fechaMostrada = document.getElementById("fechaMostrada");
+    const alertaSinDatos = document.getElementById("alertaSinDatos");
+    const tablaReporte1 = document.getElementById("tablaReporte1");
+    const tablaReporte2 = document.getElementById("tablaReporte2");
+    const tablaReporte3 = document.getElementById("tablaReporte3");
+    const tablaReporte4 = document.getElementById("tablaReporte4");
+
+    const TIPOS_OT_DESC_EXCLUIDOS = [
+      "AVERIA RED PRIMARIA"
+    ];
+
+    input.addEventListener("change", function(event) {
+      const archivo = event.target.files[0];
+
+      if (!archivo) return;
+
+      mensaje.textContent = "Archivo seleccionado: " + archivo.name;
+
+      const lector = new FileReader();
+
+      lector.onload = function(e) {
+        const datos = new Uint8Array(e.target.result);
+
+        const libro = XLSX.read(datos, {
+          type: "array",
+          cellDates: true
+        });
+
+        const primeraHoja = libro.SheetNames[0];
+        const hoja = libro.Sheets[primeraHoja];
+
+        const filas = XLSX.utils.sheet_to_json(hoja, {
+          defval: "",
+          range: 1
+        });
+
+        generarReporte(filas);
+      };
+
+      lector.readAsArrayBuffer(archivo);
+    });
+
+    function limpiarTexto(valor) {
+      return String(valor || "").trim();
+    }
+
+    function textoMayuscula(valor) {
+      return limpiarTexto(valor).toUpperCase();
+    }
+
+    function fechaHoyPC() {
+      const hoy = new Date();
+
+      const anio = hoy.getFullYear();
+      const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+      const dia = String(hoy.getDate()).padStart(2, "0");
+
+      return anio + "-" + mes + "-" + dia;
+    }
+
+    function fechaBonita(fechaISO) {
+      const partes = fechaISO.split("-");
+
+      if (partes.length !== 3) return fechaISO;
+
+      return partes[2] + "/" + partes[1] + "/" + partes[0];
+    }
+
+    function obtenerFecha(valor) {
+      if (!valor) return "";
+
+      if (valor instanceof Date) {
+        const anio = valor.getFullYear();
+        const mes = String(valor.getMonth() + 1).padStart(2, "0");
+        const dia = String(valor.getDate()).padStart(2, "0");
+
+        return anio + "-" + mes + "-" + dia;
+      }
+
+      if (typeof valor === "number") {
+        const fechaExcel = XLSX.SSF.parse_date_code(valor);
+
+        if (!fechaExcel) return "";
+
+        const anio = fechaExcel.y;
+        const mes = String(fechaExcel.m).padStart(2, "0");
+        const dia = String(fechaExcel.d).padStart(2, "0");
+
+        return anio + "-" + mes + "-" + dia;
+      }
+
+      const texto = String(valor).trim().toUpperCase();
+
+      const meses = {
+        "JAN": "01",
+        "FEB": "02",
+        "MAR": "03",
+        "APR": "04",
+        "MAY": "05",
+        "JUN": "06",
+        "JUL": "07",
+        "AUG": "08",
+        "SEP": "09",
+        "OCT": "10",
+        "NOV": "11",
+        "DEC": "12",
+        "ENE": "01",
+        "ABR": "04",
+        "AGO": "08",
+        "DIC": "12"
+      };
+
+      const primeraParte = texto.split(" ")[0];
+      const partesFecha = primeraParte.split("-");
+
+      if (partesFecha.length === 3) {
+        const dia = partesFecha[0].padStart(2, "0");
+        const mesTexto = partesFecha[1];
+        const anioCorto = partesFecha[2];
+
+        if (meses[mesTexto]) {
+          const anio = anioCorto.length === 2 ? "20" + anioCorto : anioCorto;
+          const mes = meses[mesTexto];
+
+          return anio + "-" + mes + "-" + dia;
+        }
+      }
+
+      if (texto.includes("-") && texto.length >= 10) {
+        const posibleFecha = texto.slice(0, 10);
+
+        if (posibleFecha[4] === "-" && posibleFecha[7] === "-") {
+          return posibleFecha;
+        }
+      }
+
+      if (texto.includes("/")) {
+        const soloFecha = texto.split(" ")[0];
+        const partes = soloFecha.split("/");
+
+        if (partes.length < 3) return "";
+
+        const dia = partes[0].padStart(2, "0");
+        const mes = partes[1].padStart(2, "0");
+        const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+
+        return anio + "-" + mes + "-" + dia;
+      }
+
+      return "";
+    }
+
+    function mapearEstadoSA(estadoOriginal) {
+      const estado = textoMayuscula(estadoOriginal);
+
+      if (estado === "ACEPTADO") return "Aceptado";
+
+      if (estado === "EN CAMINO") return "En camino";
+      if (estado === "ENCAMINO") return "En camino";
+      if (estado === "ENRUTA") return "En camino";
+      if (estado === "EN RUTA") return "En camino";
+
+      if (estado === "ENSITIO") return "EnSitio";
+      if (estado === "EN SITIO") return "EnSitio";
+
+      if (estado === "FINALIZADO") return "Finalizado";
+
+      return null;
+    }
+
+    function esTipoOtDescExcluido(fila) {
+      const tipoOtDesc = textoMayuscula(fila["TIPO_OT_DESC"]);
+      return TIPOS_OT_DESC_EXCLUIDOS.includes(tipoOtDesc);
+    }
+
+    function generarReporte(filas) {
+      const fechaDeHoy = fechaHoyPC();
+      fechaMostrada.textContent = fechaBonita(fechaDeHoy);
+
+      const baseFiltrada = filas.filter(fila => {
+        return textoMayuscula(fila["PRODUCTO"]) === "HFC" &&
+               obtenerFecha(fila["APPOINTMENTDISPATCH"]) === fechaDeHoy;
+      });
+
+      const filtradas = baseFiltrada.filter(fila => !esTipoOtDescExcluido(fila));
+
+      if (filtradas.length === 0) {
+        alertaSinDatos.style.display = "block";
+      } else {
+        alertaSinDatos.style.display = "none";
+      }
+
+      generarTabla1(filtradas);
+      generarTabla2(filtradas);
+      generarTabla3(filtradas);
+      generarTabla4(filtradas);
+
+      reporte.style.display = "block";
+    }
+
+    function generarTabla1(filtradas) {
+      const filasTabla1 = filtradas.filter(fila => {
+        return textoMayuscula(fila["TERRITORIO"]) === "T4";
+      });
+
+      const categorias = [];
+      const estados = ["Aceptado", "En camino", "EnSitio", "Finalizado"];
+      const conteo = {};
+
+      filasTabla1.forEach(fila => {
+        const ot = limpiarTexto(fila["OT"]);
+        if (ot === "") return;
+
+        const categoria = limpiarTexto(fila["TIPO_OT"]) || "SIN TIPO_OT";
+        const estado = mapearEstadoSA(fila["SA_STATUS"]);
+
+        if (!estado) return;
+
+        if (!categorias.includes(categoria)) {
+          categorias.push(categoria);
+        }
+
+        if (!conteo[categoria]) {
+          conteo[categoria] = {};
+        }
+
+        if (!conteo[categoria][estado]) {
+          conteo[categoria][estado] = 0;
+        }
+
+        conteo[categoria][estado]++;
+      });
+
+      const ordenCategorias = ["AVERIA", "HH", "OTRAS OT", "TEXT", "ADD"];
+
+      categorias.sort((a, b) => {
+        const posA = ordenCategorias.indexOf(a);
+        const posB = ordenCategorias.indexOf(b);
+
+        if (posA === -1 && posB === -1) return a.localeCompare(b);
+        if (posA === -1) return 1;
+        if (posB === -1) return -1;
+
+        return posA - posB;
+      });
+
+      const totalPorEstado = {
+        "Aceptado": 0,
+        "En camino": 0,
+        "EnSitio": 0,
+        "Finalizado": 0
+      };
+
+      categorias.forEach(categoria => {
+        estados.forEach(estado => {
+          const valor = conteo[categoria][estado] || 0;
+          totalPorEstado[estado] += valor;
+        });
+      });
+
+      const estadosVisibles = estados.filter(estado => {
+        if (estado === "Finalizado") return true;
+        return totalPorEstado[estado] > 0;
+      });
+
+      tablaReporte1.innerHTML = construirTablaPivote(categorias, estadosVisibles, conteo, totalPorEstado, {
+        columnaVerde: "Finalizado"
+      });
+    }
+
+    function generarTabla2(filtradas) {
+      const filasTabla2 = filtradas.filter(fila => {
+        return textoMayuscula(fila["ESTADO_REPORT"]) === "INSTALADAS";
+      });
+
+      const territorios = ["T1", "T2", "T3", "T4"];
+      const tipos = ["ADD", "AVERIA", "HH", "OTRAS OT", "TEXT"];
+      const conteo = {};
+
+      territorios.forEach(territorio => {
+        conteo[territorio] = {};
+        tipos.forEach(tipo => {
+          conteo[territorio][tipo] = 0;
+        });
+      });
+
+      filasTabla2.forEach(fila => {
+        const ot = limpiarTexto(fila["OT"]);
+        if (ot === "") return;
+
+        const territorio = textoMayuscula(fila["TERRITORIO"]);
+        const tipo = textoMayuscula(fila["TIPO_OT"]);
+
+        if (!territorios.includes(territorio)) return;
+        if (!tipos.includes(tipo)) return;
+
+        conteo[territorio][tipo]++;
+      });
+
+      const totalPorTipo = {};
+      tipos.forEach(tipo => {
+        totalPorTipo[tipo] = 0;
+      });
+
+      territorios.forEach(territorio => {
+        tipos.forEach(tipo => {
+          totalPorTipo[tipo] += conteo[territorio][tipo] || 0;
+        });
+      });
+
+      tablaReporte2.innerHTML = construirTablaPivote(territorios, tipos, conteo, totalPorTipo, {
+        filaVerde: "T4"
+      });
+    }
+
+    function generarTabla3(filtradas) {
+      const filasTabla3 = filtradas.filter(fila => {
+        return textoMayuscula(fila["TERRITORIO"]) === "T4" &&
+               textoMayuscula(fila["ESTADO_REPORT"]) === "CAIDAS";
+      });
+
+      const razones = [];
+      const tipos = ["AVERIA", "HH", "OTRAS OT", "TEXT"];
+      const conteo = {};
+
+      filasTabla3.forEach(fila => {
+        const ot = limpiarTexto(fila["OT"]);
+        if (ot === "") return;
+
+        const razon = limpiarTexto(fila["REASON"]) || "(blank)";
+        const tipo = textoMayuscula(fila["TIPO_OT"]);
+
+        if (!tipos.includes(tipo)) return;
+
+        if (!razones.includes(razon)) {
+          razones.push(razon);
+        }
+
+        if (!conteo[razon]) {
+          conteo[razon] = {};
+        }
+
+        if (!conteo[razon][tipo]) {
+          conteo[razon][tipo] = 0;
+        }
+
+        conteo[razon][tipo]++;
+      });
+
+      const ordenRazones = [
+        "CLIENTE NO CONTACTADO",
+        "CLIENTE PIDIO REPROGRAMAR EN LLAMADA",
+        "COORDINAR INSTALACION",
+        "ESCALAMIENTOS A RED",
+        "PROBLEMAS INTERNO CLIENTE",
+        "VENTA MAL CARGADA",
+        "(BLANK)"
+      ];
+
+      razones.sort((a, b) => {
+        const aMayus = textoMayuscula(a);
+        const bMayus = textoMayuscula(b);
+
+        const posA = ordenRazones.indexOf(aMayus);
+        const posB = ordenRazones.indexOf(bMayus);
+
+        if (posA === -1 && posB === -1) return a.localeCompare(b);
+        if (posA === -1) return 1;
+        if (posB === -1) return -1;
+
+        return posA - posB;
+      });
+
+      const totalPorTipo = {};
+      tipos.forEach(tipo => {
+        totalPorTipo[tipo] = 0;
+      });
+
+      razones.forEach(razon => {
+        tipos.forEach(tipo => {
+          totalPorTipo[tipo] += conteo[razon][tipo] || 0;
+        });
+      });
+
+      const tiposVisibles = tipos.filter(tipo => totalPorTipo[tipo] > 0);
+
+      tablaReporte3.innerHTML = construirTablaPivote(razones, tiposVisibles, conteo, totalPorTipo);
+    }
+
+    function generarTabla4(filtradas) {
+      const filasTabla4 = filtradas.filter(fila => {
+        const estadoReport = textoMayuscula(fila["ESTADO_REPORT"]);
+
+        return textoMayuscula(fila["TERRITORIO"]) === "T4" &&
+               (estadoReport === "CAIDAS" || estadoReport === "INSTALADAS");
+      });
+
+      const tipos = ["AVERIA", "HH", "OTRAS OT", "TEXT"];
+      const estados = ["CAIDAS", "INSTALADAS"];
+      const conteo = {};
+
+      tipos.forEach(tipo => {
+        conteo[tipo] = {};
+        estados.forEach(estado => {
+          conteo[tipo][estado] = 0;
+        });
+      });
+
+      filasTabla4.forEach(fila => {
+        const ot = limpiarTexto(fila["OT"]);
+        if (ot === "") return;
+
+        const tipo = textoMayuscula(fila["TIPO_OT"]);
+        const estado = textoMayuscula(fila["ESTADO_REPORT"]);
+
+        if (!tipos.includes(tipo)) return;
+        if (!estados.includes(estado)) return;
+
+        conteo[tipo][estado]++;
+      });
+
+      const totalPorEstado = {
+        "CAIDAS": 0,
+        "INSTALADAS": 0
+      };
+
+      tipos.forEach(tipo => {
+        estados.forEach(estado => {
+          totalPorEstado[estado] += conteo[tipo][estado] || 0;
+        });
+      });
+
+      let totalGeneral = 0;
+      estados.forEach(estado => {
+        totalGeneral += totalPorEstado[estado];
+      });
+
+      let html = "<table>";
+
+      html += "<tr>";
+      html += "<th>Row Labels</th>";
+      html += "<th class='col-caidas'>CAIDAS</th>";
+      html += "<th class='col-instaladas'>INSTALADAS</th>";
+      html += "<th>Grand Total</th>";
+      html += "</tr>";
+
+      tipos.forEach(tipo => {
+        const caidas = conteo[tipo]["CAIDAS"] || 0;
+        const instaladas = conteo[tipo]["INSTALADAS"] || 0;
+        const totalFila = caidas + instaladas;
+
+        html += "<tr>";
+        html += "<td>" + tipo + "</td>";
+        html += "<td class='col-caidas'>" + (caidas === 0 ? "" : caidas) + "</td>";
+        html += "<td class='col-instaladas'>" + (instaladas === 0 ? "" : instaladas) + "</td>";
+        html += "<td><strong>" + totalFila + "</strong></td>";
+        html += "</tr>";
+      });
+
+      html += "<tr class='total'>";
+      html += "<td>Grand Total</td>";
+      html += "<td class='col-caidas'>" + (totalPorEstado["CAIDAS"] || "") + "</td>";
+      html += "<td class='col-instaladas'>" + (totalPorEstado["INSTALADAS"] || "") + "</td>";
+      html += "<td>" + totalGeneral + "</td>";
+      html += "</tr>";
+
+      const porcentajeCaidas = totalGeneral > 0 ? Math.round((totalPorEstado["CAIDAS"] / totalGeneral) * 100) : 0;
+      const porcentajeInstaladas = totalGeneral > 0 ? Math.round((totalPorEstado["INSTALADAS"] / totalGeneral) * 100) : 0;
+
+      html += "<tr class='fila-porcentaje'>";
+      html += "<td></td>";
+      html += "<td>" + porcentajeCaidas + "%</td>";
+      html += "<td>" + porcentajeInstaladas + "%</td>";
+      html += "<td>100%</td>";
+      html += "</tr>";
+
+      html += "</table>";
+
+      tablaReporte4.innerHTML = html;
+    }
+
+    function construirTablaPivote(filas, columnas, conteo, totalPorColumna, opciones = {}) {
+      let html = "<table>";
+
+      html += "<tr>";
+      html += "<th>Row Labels</th>";
+
+      columnas.forEach(columna => {
+        const claseColumna = opciones.columnaVerde === columna ? " class='col-finalizado'" : "";
+        html += "<th" + claseColumna + ">" + columna + "</th>";
+      });
+
+      html += "<th>Grand Total</th>";
+      html += "</tr>";
+
+      let totalGeneral = 0;
+
+      filas.forEach(fila => {
+        const claseFila = opciones.filaVerde === fila ? " class='fila-t4'" : "";
+
+        let totalFila = 0;
+
+        html += "<tr" + claseFila + ">";
+        html += "<td>" + fila + "</td>";
+
+        columnas.forEach(columna => {
+          const valor = conteo[fila] && conteo[fila][columna] ? conteo[fila][columna] : 0;
+          const claseColumna = opciones.columnaVerde === columna ? " class='col-finalizado'" : "";
+
+          totalFila += valor;
+
+          html += "<td" + claseColumna + ">" + (valor === 0 ? "" : valor) + "</td>";
+        });
+
+        totalGeneral += totalFila;
+
+        html += "<td><strong>" + totalFila + "</strong></td>";
+        html += "</tr>";
+      });
+
+      html += "<tr class='total'>";
+      html += "<td>Grand Total</td>";
+
+      columnas.forEach(columna => {
+        const valor = totalPorColumna[columna] || 0;
+        const claseColumna = opciones.columnaVerde === columna ? " class='col-finalizado'" : "";
+
+        html += "<td" + claseColumna + ">" + (valor === 0 ? "" : valor) + "</td>";
+      });
+
+      html += "<td>" + totalGeneral + "</td>";
+      html += "</tr>";
+
+      html += "</table>";
+
+      return html;
+    }
+
+    function descargarJPG() {
+      const area = document.getElementById("reporteImagen");
+
+      html2canvas(area, {
+        scale: 3,
+        backgroundColor: "#ffffff"
+      }).then(canvas => {
+        const enlace = document.createElement("a");
+        enlace.download = "reporte_hfc.jpg";
+        enlace.href = canvas.toDataURL("image/jpeg", 0.95);
+        enlace.click();
+      });
+    }
+  </script>
+
+</body>
+</html>
